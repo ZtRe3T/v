@@ -9,7 +9,7 @@ import threading
 import eel
 import re
 
-# ...existing code de funções auxiliares...
+# ...existing helper functions code...
 BASE58_CHARS = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 INVALID_CHARS = 'O0Il'
 
@@ -71,20 +71,20 @@ def format_speed(speed):
 
 def validate_pattern(pattern):
     if not pattern:
-        return False, "O padrão não pode estar vazio."
+        return False, "The pattern cannot be empty."
     if not pattern.startswith('1'):
-        return False, "O padrão deve começar com '1'."
+        return False, "The pattern must start with '1'."
     if len(pattern) < 2 or len(pattern) > 10:
-        return False, "O padrão deve ter entre 2 e 10 caracteres."
+        return False, "The pattern must be between 2 and 10 characters long."
     invalid_chars = set(pattern) - set(BASE58_CHARS)
     if invalid_chars:
         chars_list = "', '".join(invalid_chars)
-        return False, f"Caracteres inválidos: '{chars_list}' - utilize: {BASE58_CHARS}"
+        return False, f"Invalid characters: '{chars_list}' - use: {BASE58_CHARS}"
     ambiguous_chars = set(pattern) & set(INVALID_CHARS)
     if ambiguous_chars:
         chars_list = "', '".join(ambiguous_chars)
-        return False, f"Caracteres ambíguos: '{chars_list}' - evite: {INVALID_CHARS}"
-    return True, "Padrão válido!"
+        return False, f"Ambiguous characters: '{chars_list}' - avoid: {INVALID_CHARS}"
+    return True, "Valid pattern!"
 
 def generate_address(pattern, stats, result_container):
     target = pattern[1:]
@@ -106,8 +106,8 @@ def update_stats(stats, pattern):
         current_attempts = stats.attempts.value
         elapsed_time = time.time() - stats.start_time
         speed = calculate_speed(current_attempts, elapsed_time)
-        message = f"Procurando: {pattern}"
-        stats_info = f"Tentativas: {current_attempts:,} | Tempo: {int(elapsed_time)}s | Velocidade: {format_speed(speed)}"
+        message = f"Searching: {pattern}"
+        stats_info = f"Attempts: {current_attempts:,} | Time: {int(elapsed_time)}s | Speed: {format_speed(speed)}"
         eel.update_progress(message, stats_info)
         time.sleep(0.1)
 
@@ -115,7 +115,7 @@ def update_stats(stats, pattern):
 def start_generation(pattern):
     is_valid, message = validate_pattern(pattern)
     if not is_valid:
-        eel.update_progress(f"Erro: {message}", "")
+        eel.update_progress(f"Error: {message}", "")
         return
     stats = Stats()
     stats.start_time = time.time()
@@ -130,11 +130,11 @@ def start_generation(pattern):
     elapsed_time = time.time() - stats.start_time
     final_attempts = stats.attempts.value
     final_speed = calculate_speed(final_attempts, elapsed_time)
-    final_stats = f"Tempo: {elapsed_time:.2f}s | Tentativas: {final_attempts:,} | Velocidade: {format_speed(final_speed)}"
+    final_stats = f"Time: {elapsed_time:.2f}s | Attempts: {final_attempts:,} | Speed: {format_speed(final_speed)}"
     address, wif = result_container.get('result', ("", ""))
     eel.show_result(address, wif, final_stats)
 
-# Inicializa o Eel apontando para a pasta atual (que contém o index.html)
+# Initialize Eel pointing to the current folder (which contains index.html)
 eel.init('')
 
 if __name__ == "__main__":

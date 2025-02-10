@@ -11,9 +11,9 @@ import signal
 import sys
 import re
 
-# Constantes para validação Base58 Bitcoin
+# Constants for Bitcoin Base58 validation
 BASE58_CHARS = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-INVALID_CHARS = 'O0Il'  # Caracteres ambíguos não utilizados em Base58 Bitcoin
+INVALID_CHARS = 'O0Il'  # Ambiguous characters not used in Bitcoin Base58
 
 class Stats:
     def __init__(self):
@@ -72,7 +72,7 @@ def format_speed(speed):
     return f"{speed:.2f}/s"
 
 def generate_address(pattern, queue, stats, process_id):
-    target = pattern[1:]  # Remove o '1' inicial uma vez
+    target = pattern[1:]  # Remove the initial '1'
     target_len = len(pattern)
     while not stats.found:
         private_key = create_private_key()
@@ -82,7 +82,7 @@ def generate_address(pattern, queue, stats, process_id):
         with stats.attempts.get_lock():
             stats.attempts.value += 1
         
-        # Comparação direta dos caracteres após o '1'
+        # Direct comparison of characters after '1'
         if address[1:target_len] == target:
             wif = private_to_wif(private_key)
             stats.found = True
@@ -90,7 +90,7 @@ def generate_address(pattern, queue, stats, process_id):
             break
 
 def print_stats(stats, pattern):
-    with tqdm(total=None, desc=f"Procurando padrão: {pattern}", unit="tentativas") as pbar:
+    with tqdm(total=None, desc=f"Searching for pattern: {pattern}", unit="attempts") as pbar:
         last_attempts = 0
         
         while not stats.found:
@@ -101,9 +101,9 @@ def print_stats(stats, pattern):
             speed = calculate_speed(current_attempts, elapsed_time)
             
             pbar.set_postfix({
-                "velocidade": format_speed(speed),
+                "speed": format_speed(speed),
                 "total": f"{current_attempts:,}",
-                "tempo": f"{int(elapsed_time)}s"
+                "time": f"{int(elapsed_time)}s"
             })
             pbar.update(new_attempts)
             
@@ -112,74 +112,74 @@ def print_stats(stats, pattern):
 
 def validate_pattern(pattern):
     if not pattern:
-        return False, "O padrão não pode estar vazio."
+        return False, "The pattern cannot be empty."
     
     if not pattern.startswith('1'):
-        return False, "O padrão deve começar com '1'."
+        return False, "The pattern must start with '1'."
     
     if len(pattern) < 2 or len(pattern) > 10:
-        return False, "O padrão deve ter entre 2 e 10 caracteres."
+        return False, "The pattern must be between 2 and 10 characters long."
     
     invalid_chars = set(pattern) - set(BASE58_CHARS)
     if invalid_chars:
         chars_list = "', '".join(invalid_chars)
-        return False, f"Caracteres inválidos detectados: '{chars_list}'\n" \
-                     f"Use apenas os seguintes caracteres:\n{BASE58_CHARS}"
+        return False, f"Invalid characters detected: '{chars_list}'\n" \
+                     f"Use only the following characters:\n{BASE58_CHARS}"
     
     ambiguous_chars = set(pattern) & set(INVALID_CHARS)
     if ambiguous_chars:
         chars_list = "', '".join(ambiguous_chars)
-        return False, f"Caracteres ambíguos detectados: '{chars_list}'\n" \
-                     f"Para evitar confusão, não use: O, 0, I, l"
+        return False, f"Ambiguous characters detected: '{chars_list}'\n" \
+                     f"To avoid confusion, do not use: O, 0, I, l"
 
-    return True, "Padrão válido!"
+    return True, "Valid pattern!"
 
 def print_help():
-    print("\n=== Guia de Caracteres Válidos ===")
-    print("Caracteres permitidos:")
-    print(f"• Números: {BASE58_CHARS[:9]}")
-    print(f"• Letras maiúsculas: {BASE58_CHARS[9:35]}")
-    print(f"• Letras minúsculas: {BASE58_CHARS[35:]}")
-    print("\nCaracteres não permitidos (ambíguos):")
+    print("\n=== Valid Characters Guide ===")
+    print("Allowed characters:")
+    print(f"• Numbers: {BASE58_CHARS[:9]}")
+    print(f"• Uppercase letters: {BASE58_CHARS[9:35]}")
+    print(f"• Lowercase letters: {BASE58_CHARS[35:]}")
+    print("\nAmbiguous characters (not allowed):")
     print(f"• {', '.join(INVALID_CHARS)}")
-    print("\nExemplos válidos:")
+    print("\nValid examples:")
     print("• 1ABC")
     print("• 1Bitcoin")
     print("• 1satoshi")
-    print("\nExemplos inválidos:")
-    print("• 1O0l (contém caracteres ambíguos)")
-    print("• 1BTC! (contém caracteres especiais)")
+    print("\nInvalid examples:")
+    print("• 1O0l (contains ambiguous characters)")
+    print("• 1BTC! (contains special characters)")
     print("=" * 40 + "\n")
 
 def signal_handler(signum, frame):
-    print("\nOperação cancelada pelo usuário.")
+    print("\nOperation cancelled by user.")
     sys.exit(0)
 
 def main():
-    print("\n=== Gerador de Vanity Address Bitcoin ===")
-    print("Desenvolvido por: AnesDiego")
-    print("Data: 2025-01-22 18:58:54 UTC")
+    print("\n=== Bitcoin Vanity Address Generator ===")
+    print("Developed by: AnesDiego")
+    print("Date: 2025-01-22 18:58:54 UTC")
     print("=" * 40)
     
     print_help()
 
     while True:
-        pattern = input("Digite o padrão desejado (ou 'ajuda' para ver o guia): ").strip()
+        pattern = input("Enter the desired pattern (or 'help' to view the guide): ").strip()
         
-        if pattern.lower() == 'ajuda':
+        if pattern.lower() == 'help':
             print_help()
             continue
         
         is_valid, message = validate_pattern(pattern)
         if not is_valid:
-            print(f"\nErro: {message}\n")
+            print(f"\nError: {message}\n")
             continue
         
-        print(f"\nSucesso: {message}")
+        print(f"\nSuccess: {message}")
         break
 
-    print(f"\nIniciando busca por endereço que começa com: {pattern}")
-    print("Pressione Ctrl+C para cancelar a operação\n")
+    print(f"\nStarting search for address beginning with: {pattern}")
+    print("Press Ctrl+C to cancel the operation\n")
 
     signal.signal(signal.SIGINT, signal_handler)
 
@@ -211,14 +211,14 @@ def main():
     final_speed = calculate_speed(total_attempts, elapsed_time)
 
     print("\n" + "=" * 40)
-    print("Endereço encontrado!")
+    print("Address found!")
     print("=" * 40)
-    print(f"Endereço: {address}")
-    print(f"Chave Privada (WIF): {wif}")
-    print("\nEstatísticas finais:")
-    print(f"Tempo total: {elapsed_time:.2f} segundos")
-    print(f"Total de tentativas: {total_attempts:,}")
-    print(f"Velocidade média: {format_speed(final_speed)}")
+    print(f"Address: {address}")
+    print(f"Private Key (WIF): {wif}")
+    print("\nFinal Statistics:")
+    print(f"Total time: {elapsed_time:.2f} seconds")
+    print(f"Total attempts: {total_attempts:,}")
+    print(f"Average speed: {format_speed(final_speed)}")
     print("=" * 40)
 
 if __name__ == "__main__":
