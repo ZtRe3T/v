@@ -138,4 +138,4 @@ def start_generation(pattern):
 eel.init('')
 
 if __name__ == "__main__":
-    eel.start('index.html', host='localhost', port=8000, size=(800,600))
+    eel.start('index.html', host='0.0.0.0', port=8000, mode=None)
