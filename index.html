@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Gerador de Vanity Address Bitcoin</title>
+  <script type="text/javascript" src="/eel.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #progress { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Gerador de Vanity Address Bitcoin</h1>
+  <p>Digite o padrão desejado (deve começar com "1"):</p>
+  <input type="text" id="pattern" placeholder="Ex: 1ABC" />
+  <button onclick="startGeneration()">Iniciar</button>
+  
+  <div id="progress">
+    <p id="status"></p>
+    <p id="stats"></p>
+  </div>
+
+  <div id="result" style="margin-top:20px;"></div>
+
+  <script>
+    function startGeneration() {
+      var pattern = document.getElementById("pattern").value;
+      document.getElementById("status").innerText = "Iniciando...";
+      eel.start_generation(pattern);
+    }
+    
+    eel.expose(update_progress);
+    function update_progress(message, stats) {
+      document.getElementById("status").innerText = message;
+      document.getElementById("stats").innerText = stats;
+    }
+    
+    eel.expose(show_result);
+    function show_result(address, wif, final_stats) {
+      document.getElementById("result").innerHTML =
+        "<h2>Endereço Encontrado!</h2>" +
+        "<p><strong>Endereço:</strong> " + address + "</p>" +
+        "<p><strong>Chave Privada (WIF):</strong> " + wif + "</p>" +
+        "<p>" + final_stats + "</p>";
+      document.getElementById("status").innerText = "";
+      document.getElementById("stats").innerText = "";
+    }
+  </script>
+</body>
+</html>
