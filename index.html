@@ -10,7 +10,6 @@
     * {
       box-sizing: border-box;
     }
-  
     body {
       font-family: 'Roboto', sans-serif;
       background-color: #0d1117;
@@ -22,7 +21,6 @@
       justify-content: center;
       color: #c9d1d9;
     }
-  
     .container {
       background-color: #161b22;
       padding: 40px;
@@ -32,18 +30,15 @@
       text-align: center;
       word-wrap: break-word;
     }
-  
     h1 {
       margin-top: 0;
       font-size: 24px;
       color: #c9d1d9;
     }
-  
     p {
       font-size: 16px;
       color: #c9d1d9;
     }
-  
     input[type="text"] {
       width: 100%;
       padding: 10px;
@@ -54,11 +49,9 @@
       font-size: 16px;
       color: #c9d1d9;
     }
-  
     input[type="text"]::placeholder {
       color: #8b949e;
     }
-  
     button {
       background-color: #238636;
       color: #ffffff;
@@ -69,29 +62,23 @@
       cursor: pointer;
       transition: background-color 0.3s ease;
     }
-  
     button:hover {
       background-color: #196c2e;
     }
-  
-    #progress, #result {
+    #estimate, #progress, #result {
       margin-top: 20px;
       font-size: 14px;
       text-align: left;
       overflow-wrap: break-word;
     }
-  
-    #progress p {
+    #estimate p, #progress p {
       margin: 5px 0;
     }
-  
     #result h2 {
       margin-top: 0;
       font-size: 20px;
       color: #238636;
     }
-  
-    /* Responsive adjustments for mobile devices */
     @media (max-width: 600px) {
       .container {
         width: 90%;
@@ -100,7 +87,7 @@
       h1 {
         font-size: 20px;
       }
-      p, input[type="text"], button, #progress, #result {
+      p, input[type="text"], button, #estimate, #progress, #result {
         font-size: 14px;
       }
     }
@@ -110,28 +97,50 @@
   <div class="container">
     <h1>Gerador de Vanity Address Bitcoin</h1>
     <p>Digite o padrão desejado (deve começar com "1"):</p>
-    <input type="text" id="pattern" placeholder="Ex: 1ABC" />
+    <input type="text" id="pattern" placeholder="Ex: 1ABC" oninput="updateEstimate()" />
     <button onclick="startGeneration()">Iniciar</button>
+    
+    <div id="estimate">
+      <p id="estimateText"></p>
+    </div>
     
     <div id="progress">
       <p id="status"></p>
       <p id="stats"></p>
+      <p id="countdown"></p>
     </div>
   
     <div id="result"></div>
   </div>
 
   <script>
+    // Displays probability based solely on the prefix length
+    function updateEstimate() {
+      var pattern = document.getElementById("pattern").value;
+      if (!pattern || pattern.length < 2) {
+        document.getElementById("estimateText").innerText = "";
+        return;
+      }
+      // Calculate total possibilities: 58^(length - 1)
+      var total = Math.pow(58, pattern.length - 1);
+      var probText = "Probabilidade: 1 em " + total.toLocaleString();
+      document.getElementById("estimateText").innerText = probText;
+    }
+    
     function startGeneration() {
       var pattern = document.getElementById("pattern").value;
       document.getElementById("status").innerText = "Iniciando...";
+      // Clear previous results if any.
+      document.getElementById("result").innerHTML = "";
       eel.start_generation(pattern);
     }
     
+    // This function is called periodically by the Python update_stats thread.
     eel.expose(update_progress);
-    function update_progress(message, stats) {
-      document.getElementById("status").innerText = message;
-      document.getElementById("stats").innerText = stats;
+    function update_progress(probMsg, statsMsg, countdownMsg) {
+      document.getElementById("estimateText").innerText = probMsg;
+      document.getElementById("status").innerText = statsMsg;
+      document.getElementById("countdown").innerText = countdownMsg;
     }
     
     eel.expose(show_result);
@@ -141,8 +150,9 @@
         "<p><strong>Endereço:</strong> " + address + "</p>" +
         "<p><strong>Chave Privada (WIF):</strong> " + wif + "</p>" +
         "<p>" + final_stats + "</p>";
+      // Clear progress fields after finishing.
       document.getElementById("status").innerText = "";
-      document.getElementById("stats").innerText = "";
+      document.getElementById("countdown").innerText = "";
     }
   </script>
 </body>
