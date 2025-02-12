@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Dashboard - Vanity Address Platform</title>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #0d1117;
+        color: #c9d1d9;
+        margin: 0;
+      }
+      .container {
+        max-width: 800px;
+        margin: auto;
+        padding: 20px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      input, button, select {
+        padding: 10px;
+        margin: 5px;
+      }
+      input, select {
+        border: 1px solid #30363d;
+        border-radius: 4px;
+        background-color: #22272e;
+        color: #c9d1d9;
+      }
+      button {
+        background-color: #238636;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      section {
+        margin-top: 20px;
+      }
+      pre {
+        background-color: #22272e;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .msg {
+        border-bottom: 1px solid #30363d;
+        padding: 5px 0;
+      }
+    </style>
+    <script src="/eel.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Dashboard</h1>
+        <button id="logoutBtn">Logout</button>
+      </header>
+      
+      <section id="vanitySection">
+        <h2>Vanity Address Generator</h2>
+        <p>Enter pattern (must start with "1"):</p>
+        <input type="text" id="pattern" placeholder="Ex: 1ABC" />
+        <p>Enter wallet encryption password:</p>
+        <input type="password" id="walletPass" placeholder="Encryption password" />
+        <button id="generateBtn">Generate</button>
+        <div id="progress"></div>
+        <div id="generationResult"></div>
+      </section>
+      
+      <section id="vaultSection">
+        <h2>Your Vault</h2>
+        <button id="loadVaultBtn">Load Vault</button>
+        <div id="vaultList"></div>
+        <p>Decrypt a vault entry:</p>
+        <input type="password" id="decryptPass" placeholder="Wallet encryption password" />
+        <select id="vaultEntrySelect"></select>
+        <button id="decryptEntryBtn">Decrypt</button>
+        <div id="decryptedResult"></div>
+      </section>
+
+      <section id="socialSection">
+        <h2>Friends & Messaging</h2>
+        <input type="text" id="friendUsername" placeholder="Friend's username" />
+        <button id="addFriendBtn">Add Friend</button>
+        <br/>
+        <input type="text" id="messageRecipient" placeholder="Recipient username" />
+        <input type="text" id="messageContent" placeholder="Message content" />
+        <button id="sendMsgBtn">Send Message</button>
+        <button id="loadMsgsBtn">Load Conversation</button>
+        <div id="conversation"></div>
+      </section>
+    </div>
+    <script>
+      // Vanity generator
+      document.getElementById("generateBtn").addEventListener("click", function(){
+        const pattern = document.getElementById("pattern").value;
+        const walletPass = document.getElementById("walletPass").value;
+        document.getElementById("progress").innerText = "Generating...";
+        eel.start_vanity_generation(pattern, walletPass);
+      });
+
+      eel.expose(show_generation_result);
+      function show_generation_result(msg){
+        document.getElementById("generationResult").innerText = msg;
+      }
+
+      eel.expose(update_progress);
+      function update_progress(probMsg, statsMsg, countdownMsg){
+        document.getElementById("progress").innerText = probMsg + "\n" + statsMsg + "\n" + countdownMsg;
+      }
+
+      // Vault functions
+      document.getElementById("loadVaultBtn").addEventListener("click", function(){
+        eel.view_vault()(function(response){
+          if(response.success){
+            const vault = response.wallets;
+            const vaultListDiv = document.getElementById("vaultList");
+            const vaultSelect = document.getElementById("vaultEntrySelect");
+            vaultListDiv.innerHTML = "";
+            vaultSelect.innerHTML = "";
+            vault.forEach(function(entry, index){
+              const div = document.createElement("div");
+              div.innerText = "Entry " + (index+1) + ": (encrypted)";
+              vaultListDiv.appendChild(div);
+              const opt = document.createElement("option");
+              opt.value = entry;
+              opt.innerText = "Entry " + (index+1);
+              vaultSelect.appendChild(opt);
+            });
+          }
+        });
+      });
+
+      document.getElementById("decryptEntryBtn").addEventListener("click", function(){
+        const vaultEntry = document.getElementById("vaultEntrySelect").value;
+        const decryptPass = document.getElementById("decryptPass").value;
+        eel.decrypt_vault_entry(vaultEntry, decryptPass)(function(response){
+          if(response.success){
+            document.getElementById("decryptedResult").innerText = response.decrypted;
+          } else {
+            document.getElementById("decryptedResult").innerText = response.message;
+          }
+        });
+      });
+
+      // Social functions
+      document.getElementById("addFriendBtn").addEventListener("click", function(){
+        const friendUsername = document.getElementById("friendUsername").value;
+        eel.add_friend(friendUsername)(function(response){
+          alert(response.message);
+        });
+      });
+
+      document.getElementById("sendMsgBtn").addEventListener("click", function(){
+        const to_username = document.getElementById("messageRecipient").value;
+        const content = document.getElementById("messageContent").value;
+        eel.send_message(to_username, content)(function(response){
+          alert(response.message);
+        });
+      });
+
+      document.getElementById("loadMsgsBtn").addEventListener("click", function(){
+        const with_username = document.getElementById("messageRecipient").value;
+        eel.get_messages(with_username)(function(response){
+          if(response.success){
+            const conv = response.messages;
+            const convDiv = document.getElementById("conversation");
+            convDiv.innerHTML = "";
+            conv.forEach(function(msg){
+              const div = document.createElement("div");
+              div.className = "msg";
+              div.innerText = `[${msg.timestamp}] ${msg.from}: ${msg.content}`;
+              convDiv.appendChild(div);
+            });
+          }
+        });
+      });
+
+      // Logout
+      document.getElementById("logoutBtn").addEventListener("click", function(){
+        eel.logout()(function(response){
+          window.location = "login.html";
+        });
+      });
+    </script>
+  </body>
+</html>
